@@ -14,6 +14,7 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
+PURPLE = (128, 0, 128)
 
 clock = pygame.time.Clock()
 snake_pos = [100, 50]
@@ -26,6 +27,11 @@ score = 0
 
 apple_pos = [random.randrange(1, 30) * speed, random.randrange(1, 25) * speed]
 apple_spawn_time = time.time()
+
+poison_pos = [random.randrange(1, 30) * speed, random.randrange(1, 25) * speed]
+poison_apple_active = False
+poison_apple_spawn_time = 0
+poison_apple_interval = 30
 
 pygame.font.init()
 font = pygame.font.SysFont('arial', 35, bold=True)
@@ -82,17 +88,32 @@ while running:
 
     snake_body.insert(0, list(snake_pos))
 
+    # Sprawdzenie czy wąż zjadł jablko
     if pygame.Rect(snake_pos[0], snake_pos[1], speed, speed).colliderect(pygame.Rect(apple_pos[0], apple_pos[1], speed, speed)):
         score += 1
         apple_pos = [random.randrange(1, 30) * speed, random.randrange(1, 25) * speed]
         apple_spawn_time = time.time()
-        print(score)
+
     else:
         snake_body.pop()
 
+    # Sprawdzenie czy wąż zjadl zatrute jablko
+    if poison_apple_active and pygame.Rect(snake_pos[0], snake_pos[1], speed, speed).colliderect(pygame.Rect(poison_pos[0], poison_pos[1], speed, speed)):
+        game_over = True
+
+    # Generowanie jabłka
     if time.time() - apple_spawn_time > 10:
         apple_pos = [random.randrange(1, 30) * speed, random.randrange(1, 25) * speed]
         apple_spawn_time = time.time()
+
+
+    if not poison_apple_active and time.time() - poison_apple_spawn_time > poison_apple_interval:
+        poison_pos = [random.randrange(1, 30) * speed, random.randrange(1, 25) * speed]
+        poison_apple_active = True
+        poison_apple_spawn_time = time.time()
+
+    if poison_apple_active and time.time() - poison_apple_spawn_time > 10:
+        poison_apple_active = False
 
     if snake_pos[0] <= 0:
         snake_pos[0] = snake_pos[0] + 600
@@ -108,6 +129,9 @@ while running:
         pygame.draw.rect(screen, GREEN, pygame.Rect(pos[0], pos[1], speed, speed))
 
     pygame.draw.rect(screen, RED, pygame.Rect(apple_pos[0], apple_pos[1], speed, speed))
+
+    if poison_apple_active:
+        pygame.draw.rect(screen, PURPLE, pygame.Rect(poison_pos[0], poison_pos[1], speed, speed))
 
     draw_score(score)
 
